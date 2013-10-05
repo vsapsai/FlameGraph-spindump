@@ -5,6 +5,7 @@ import re
 import sys
 from xml.sax import saxutils
 
+
 class FrameSample:
     """Represents sampling results for a single frame within a thread trace."""
     def __init__(self, frame, sample_count):
@@ -25,9 +26,11 @@ class FrameSample:
         else:
             return 1
 
+
 class ThreadTrace:
     _INDENTATION = 2
     _DIGIT_RE = re.compile(r"\d+")
+
     def __init__(self, trace_lines):
         self.description = trace_lines[0].strip()
         self.root_frame = None
@@ -54,16 +57,18 @@ class ThreadTrace:
     def max_stack_depth(self):
         return self.root_frame.height()
 
+
 class ProcessTrace:
     """Represents trace of entire process, consists of a several thread traces."""
     def __init__(self, attributes, process_sections):
-        "Attributes are name, path, etc.  Sections are thread traces or binary images."
+        """Attributes are name, path, etc.  Sections are thread traces or binary images."""
         self.attributes = attributes
         self.threads = []
         for process_section in process_sections:
             if process_section[0].lstrip().startswith("Thread"):
                 self.threads.append(ThreadTrace(process_section))
             # Throw away everything else, e.g. binary images.
+
 
 class TraceReport:
     def __init__(self, lines):
@@ -85,7 +90,7 @@ class TraceReport:
 
 # Parsing traces.
 def take_until_empty_line(lines):
-    "Returns first_lines and rest_lines."
+    """Returns first_lines and rest_lines."""
     assert len(lines) > 0
     assert len(lines[0]) > 0, "Empty line should be consumed earlier"
     empty_line_index = 1
@@ -102,8 +107,9 @@ def take_until_empty_line(lines):
     rest_lines = lines[nonempty_line_index:] if (nonempty_line_index < len(lines)) else None
     return first_lines, rest_lines
 
+
 def split_on_colon(lines):
-    "Returns pairs of (header, value)."
+    """Returns pairs of (header, value)."""
     result = []
     for line in lines:
         split_result = line.split(":", 1)
@@ -140,6 +146,7 @@ version="1.1" xmlns="http://www.w3.org/2000/svg">"""
         stream.write("\n")
         stream.write(self._FOOTER)
 
+
 class ColorGenerator:
     def __init__(self, base_color_triplet, max_deviation_triplet):
         self.base_color = base_color_triplet
@@ -166,6 +173,7 @@ def iterate_frames(frame):
                 yield t
             child_start += child_frame.sample_count
     return _generator(frame, 0, 0)
+
 
 def main():
     # Read and parse spindump.

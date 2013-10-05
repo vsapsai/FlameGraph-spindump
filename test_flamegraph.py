@@ -3,6 +3,7 @@
 import unittest
 import flamegraph
 
+
 class TakeUntilEmptyLineTestCase(unittest.TestCase):
     def test_trivial(self):
         first, rest = flamegraph.take_until_empty_line(["a", "", "b", "c"])
@@ -28,6 +29,7 @@ class TakeUntilEmptyLineTestCase(unittest.TestCase):
         first, rest = flamegraph.take_until_empty_line(["a", "b", ""])
         self.assertEqual(first, ["a", "b"])
         self.assertIsNone(rest)
+
 
 class SplitOnColonTestCase(unittest.TestCase):
     def test_trivial(self):
