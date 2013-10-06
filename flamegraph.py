@@ -26,6 +26,20 @@ class FrameSample:
         else:
             return 1
 
+    def iteritems(self):
+        """Iterates through all samples (first parent frame, then child frames).
+
+        Yields frame itself, its start and depth."""
+        return self.__items_generator(0, 0)
+
+    def __items_generator(self, start, depth):
+        yield (self, start, depth)
+        child_start = start
+        for child_frame in self.child_samples:
+            for t in child_frame.__items_generator(child_start, depth + 1):
+                yield t
+            child_start += child_frame.sample_count
+
 
 class ThreadTrace:
     _INDENTATION = 2
@@ -164,17 +178,6 @@ class ColorGenerator:
         return "rgb({0}, {1}, {2})".format(r, g, b)
 
 
-def iterate_frames(frame):
-    def _generator(frame, start, depth):
-        yield (frame, start, depth)
-        child_start = start
-        for child_frame in frame.child_samples:
-            for t in _generator(child_frame, child_start, depth + 1):
-                yield t
-            child_start += child_frame.sample_count
-    return _generator(frame, 0, 0)
-
-
 def main():
     # Read and parse spindump.
     filename = sys.argv[1]
@@ -192,7 +195,7 @@ def main():
     color_generator = ColorGenerator((180, 115, 28), (25, 115, 28))
     width_per_sample = width / thread_trace.root_frame.sample_count
     # Draw samples' rectangles.
-    for frame, start, depth in iterate_frames(thread_trace.root_frame):
+    for frame, start, depth in thread_trace.root_frame.iteritems():
         x = start * width_per_sample
         y = height - depth * sample_height
         width = frame.sample_count * width_per_sample
