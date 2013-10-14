@@ -300,18 +300,43 @@ class XYZColor(Color):
         return self
 
 
+def linear_interpolation(from_list, to_list, t):
+    assert 0.0 <= t <= 1.0
+    assert len(from_list) == len(to_list)
+    t = float(t)
+    result = map(lambda from_el, to_el: (from_el + t * (to_el - from_el)),
+                 from_list, to_list)
+    return result
+
+
 class ColorInterpolator:
-    def __init__(self, color_from, color_to):
-        self.color_from = color_from.as_lab()
-        self.color_to = color_to.as_lab()
+    def __init__(self, from_color, to_color):
+        self.from_color = from_color.as_lab()
+        self.to_color = to_color.as_lab()
 
     def color_at_pos(self, position):
-        assert 0.0 <= position <= 1.0
-        from_components = self.color_from.lab_components()
-        to_components = self.color_to.lab_components()
-        assert len(from_components) == len(to_components)
-        result_components = map(lambda from_c, to_c: (from_c + position * (to_c - from_c)),
-                                from_components, to_components)
+        from_components = self.from_color.lab_components()
+        to_components = self.to_color.lab_components()
+        result_components = linear_interpolation(from_components, to_components, position)
+        return Color.lab(*result_components)
+
+
+class ColorRectInterpolator:
+    def __init__(self, left_bottom_color, left_top_color, right_bottom_color, right_top_color):
+        self.left_bottom_color = left_bottom_color
+        self.left_top_color = left_top_color
+        self.right_bottom_color = right_bottom_color
+        self.right_top_color = right_top_color
+
+    def color_at_pos(self, x_pos, y_pos):
+        left_components = linear_interpolation(
+            self.left_bottom_color.lab_components(),
+            self.left_top_color.lab_components(), y_pos)
+        right_components = linear_interpolation(
+            self.right_bottom_color.lab_components(),
+            self.right_top_color.lab_components(), y_pos)
+        result_components = linear_interpolation(
+            left_components, right_components, x_pos)
         return Color.lab(*result_components)
 
 
@@ -343,21 +368,26 @@ def main():
     # Build SVG file.
     thread_trace = report.process_trace.threads[0]
     sample_height = 16.
-    width = 1200
+    total_width = 1200
     max_stack_depth = thread_trace.max_stack_depth()
     height = sample_height * max_stack_depth
-    svg = SVG(width, height)
+    svg = SVG(total_width, height)
     #color_generator = ColorGenerator((180, 115, 28), (25, 115, 28))
-    color_interpolator = ColorInterpolator(Color.rgb(0xff, 0xed, 0xa0),
-                                           Color.rgb(0xf0, 0x3b, 0x20))
-    width_per_sample = width / thread_trace.root_frame.sample_count
+    # color_interpolator = ColorInterpolator(Color.rgb(0xff, 0xed, 0xa0),
+    #                                        Color.rgb(0xf0, 0x3b, 0x20))
+    color_interpolator = ColorRectInterpolator(
+        Color.rgb(0xff, 0xed, 0xa0), Color.rgb(0xf0, 0x3b, 0x20),
+        Color.rgb(0xf7, 0xfc, 0xb9), Color.rgb(0x31, 0xa3, 0x54))
+    width_per_sample = total_width / thread_trace.root_frame.sample_count
     # Draw samples' rectangles.
     for frame, start, depth in thread_trace.root_frame.iteritems():
         x = start * width_per_sample
         y = height - depth * sample_height
         width = frame.sample_count * width_per_sample
-        svg.add_rect(x, y - sample_height, width, sample_height - 1.,
-                     color_interpolator.color_at_pos(float(depth) / max_stack_depth).rgb_string())
+        x_relative = float(x) / total_width
+        y_relative = float(depth) / max_stack_depth
+        color = color_interpolator.color_at_pos(x_relative, y_relative).rgb_string()
+        svg.add_rect(x, y - sample_height, width, sample_height - 1., color)
         svg.add_text(frame.frame, x + 2., y - 4.)
     svg.dump(sys.stdout)
 
