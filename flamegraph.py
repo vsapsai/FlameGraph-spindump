@@ -139,6 +139,8 @@ class SVG:
     _HEADER = """<svg width="{width}" height="{height}" viewBox="0 0 {width} {height}"
 version="1.1" xmlns="http://www.w3.org/2000/svg">"""
     _FOOTER = """</svg>"""
+    _SYMBOL_WIDTH = 5.7
+    _ELLIPSIS_WIDTH = 12.0
 
     def __init__(self, width, height):
         self.width = width
@@ -151,8 +153,22 @@ version="1.1" xmlns="http://www.w3.org/2000/svg">"""
 
     def add_text(self, text, x, y):
         text = saxutils.escape(text)
-        self.content_lines.append('<text x="{x:.1f}" y="{y:.1f}" font-size="12" font-family="Helvetica">{text}</text>'.format(
+        self.content_lines.append('<text x="{x:.1f}" y="{y:.1f}" '
+            'font-size="12" font-family="Helvetica">{text}</text>'.format(
             x=x, y=y, text=text))
+
+    def add_bounded_text(self, text, x, y, width):
+        text_width = len(text) * SVG._SYMBOL_WIDTH
+        if text_width > width:
+            bounded_text_length = int((width - SVG._ELLIPSIS_WIDTH) / SVG._SYMBOL_WIDTH)
+            if bounded_text_length < 1:
+                # width is too small to display at least 1 symbol with ellipsis.
+                # Don't add any text.
+                return
+            else:
+                text = text[:bounded_text_length]
+                text += '...'  # Add kinda ellipsis
+        self.add_text(text, x, y)
 
     def dump(self, stream):
         stream.write(self._HEADER.format(width=self.width, height=self.height))
@@ -388,7 +404,7 @@ def main():
         y_relative = float(depth) / max_stack_depth
         color = color_interpolator.color_at_pos(x_relative, y_relative).rgb_string()
         svg.add_rect(x, y - sample_height, width, sample_height - 1., color)
-        svg.add_text(frame.frame, x + 2., y - 4.)
+        svg.add_bounded_text(frame.frame, x + 2., y - 4., width - 2.)
     svg.dump(sys.stdout)
 
 if __name__ == '__main__':
