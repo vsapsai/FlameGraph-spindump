@@ -2,6 +2,11 @@ This project visualizes stack traces in hang and spin reports on Mac OS X.  It a
 
 The project is **heavily** inspired by remarkable [brendangregg/FlameGraph](https://github.com/brendangregg/FlameGraph).  But I am implementing everything from scratch in Python, that's why I'm not forking the original project.  I'll see how can I contribute my work to Brendan's project.
 
+## Usage
+There is no proper CLI, you can use something like
+
+`python flamegraph.py test_data/Xcode_2013-08-30-203227_Volodymyrs-Mac-mini.hang > test.svg`
+
 ## See Also
 Most useful resources:
 
