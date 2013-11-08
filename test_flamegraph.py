@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import unittest
+import StringIO
 import flamegraph
 
 
@@ -71,6 +72,53 @@ class FrameSampleTestCase(unittest.TestCase):
                           ("child_b + 1 (Foo) [0x7fff80004444]", 3, 1),
                           ("grand_child_b + 1 (Foo) [0x7fff80004444]", 3, 2)]
         self.assertEqual(actual_items, expected_items)
+
+
+class SVGTestCase(unittest.TestCase):
+    def full_svg_dump(self, svg):
+        string_buffer = StringIO.StringIO()
+        svg.dump(string_buffer)
+        result = string_buffer.getvalue()
+        string_buffer.close()
+        return result
+
+    def short_svg_dump(self, svg):
+        full_dump = self.full_svg_dump(svg)
+        result = full_dump[full_dump.find('>') + 1:]
+        result = result[:result.rfind('<')]
+        result = result.strip()
+        return result
+
+    def test_empty(self):
+        svg = flamegraph.SVG(45, 62)
+        actual_svg = self.full_svg_dump(svg)
+        expected_svg = """<svg width="45" height="62" viewBox="0 0 45 62"
+version="1.1" xmlns="http://www.w3.org/2000/svg">
+
+</svg>"""
+        self.assertEqual(expected_svg, actual_svg)
+
+    def test_add_rect(self):
+        svg = flamegraph.SVG(100, 100)
+        svg.add_rect(23.23, 76.76, 45, 54, 'rgb(100,100,100)')
+        actual_svg = self.short_svg_dump(svg)
+        expected_svg = '<rect x="23.2" y="76.8" width="45.0" height="54.0" fill="rgb(100,100,100)" rx="2" ry="2" />'
+        self.assertEqual(expected_svg, actual_svg)
+
+    def test_add_text(self):
+        svg = flamegraph.SVG(100, 100)
+        svg.add_text("foo", 12.34, 56.78)
+        actual_svg = self.short_svg_dump(svg)
+        expected_svg = '<text x="12.3" y="56.8" font-size="12" font-family="Helvetica">foo</text>'
+        self.assertEqual(expected_svg, actual_svg)
+
+    def test_escaping_text(self):
+        svg = flamegraph.SVG(100, 100)
+        svg.add_text("int const&", 12.34, 56.78)
+        actual_svg = self.short_svg_dump(svg)
+        expected_svg = '<text x="12.3" y="56.8" font-size="12" font-family="Helvetica">int const&amp;</text>'
+        self.assertEqual(expected_svg, actual_svg)
+
 
 if __name__ == '__main__':
     unittest.main()

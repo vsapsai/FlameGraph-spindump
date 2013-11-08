@@ -148,14 +148,17 @@ version="1.1" xmlns="http://www.w3.org/2000/svg">"""
         self.content_lines = []
 
     def add_rect(self, x, y, width, height, color):
-        self.content_lines.append('<rect x="{x:.1f}" y="{y:.1f}" width="{width:.1f}" height="{height:.1f}" fill="{color}" rx="2" ry="2" />'.format(
-            x=x, y=y, width=width, height=height, color=color))
+        self.content_lines.append(
+            '<rect x="{x:.1f}" y="{y:.1f}" width="{width:.1f}" '
+            'height="{height:.1f}" fill="{color}" rx="2" ry="2" />'.format(
+                x=x, y=y, width=width, height=height, color=color))
 
     def add_text(self, text, x, y):
         text = saxutils.escape(text)
-        self.content_lines.append('<text x="{x:.1f}" y="{y:.1f}" '
-            'font-size="12" font-family="Helvetica">{text}</text>'.format(
-            x=x, y=y, text=text))
+        self.content_lines.append(
+            '<text x="{x:.1f}" y="{y:.1f}" font-size="12" '
+            'font-family="Helvetica">{text}</text>'.format(
+                x=x, y=y, text=text))
 
     def add_bounded_text(self, text, x, y, width):
         text_width = len(text) * SVG._SYMBOL_WIDTH
