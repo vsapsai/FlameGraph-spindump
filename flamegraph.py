@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import unicode_literals
 import operator
 import random
 import re
@@ -170,10 +171,11 @@ version="1.1" xmlns="http://www.w3.org/2000/svg">"""
                 return
             else:
                 text = text[:bounded_text_length]
-                text += '...'  # Add kinda ellipsis
+                text += '\u2026'  # Add ellipsis
         self.add_text(text, x, y)
 
     def dump(self, stream):
+        """stream should support writing unicode strings."""
         stream.write(self._HEADER.format(width=self.width, height=self.height))
         stream.write("\n")
         stream.write("\n".join(self.content_lines))
@@ -376,6 +378,13 @@ class ColorGenerator:
         return "rgb({0}, {1}, {2})".format(r, g, b)
 
 
+class UnicodeToBinaryStreamWrapper:
+    def __init__(self, stream):
+        self.stream = stream
+
+    def write(self, unicode_str):
+        self.stream.write(unicode_str.encode('utf-8'))
+
 def main():
     # Read and parse spindump.
     filename = sys.argv[1]
@@ -408,7 +417,7 @@ def main():
         color = color_interpolator.color_at_pos(x_relative, y_relative).rgb_string()
         svg.add_rect(x, y - sample_height, width, sample_height - 1., color)
         svg.add_bounded_text(frame.frame, x + 2., y - 4., width - 2.)
-    svg.dump(sys.stdout)
+    svg.dump(UnicodeToBinaryStreamWrapper(sys.stdout))
 
 if __name__ == '__main__':
     main()

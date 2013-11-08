@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
+from __future__ import unicode_literals
 import unittest
-import StringIO
+import io
 import flamegraph
 
 
@@ -76,7 +77,7 @@ class FrameSampleTestCase(unittest.TestCase):
 
 class SVGTestCase(unittest.TestCase):
     def full_svg_dump(self, svg):
-        string_buffer = StringIO.StringIO()
+        string_buffer = io.StringIO()
         svg.dump(string_buffer)
         result = string_buffer.getvalue()
         string_buffer.close()
@@ -119,6 +120,12 @@ version="1.1" xmlns="http://www.w3.org/2000/svg">
         expected_svg = '<text x="12.3" y="56.8" font-size="12" font-family="Helvetica">int const&amp;</text>'
         self.assertEqual(expected_svg, actual_svg)
 
+    def test_non_ascii_text(self):
+        svg = flamegraph.SVG(100, 100)
+        svg.add_text("\u2026", 12.34, 56.78)
+        actual_svg = self.short_svg_dump(svg)
+        expected_svg = '<text x="12.3" y="56.8" font-size="12" font-family="Helvetica">\u2026</text>'
+        self.assertEqual(expected_svg, actual_svg)
 
 if __name__ == '__main__':
     unittest.main()
